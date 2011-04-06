@@ -40,7 +40,7 @@ function Install-GalleryVsix {
     $extension = Get-InstalledVsix $NameOrId
 
     if($extension) {
-        throw "$NameOrId is already installed."
+        throw "'$NameOrId' is already installed."
     }
     
     # Calling generic methods in PS is a mess
