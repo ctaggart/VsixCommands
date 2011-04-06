@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>VsixCommands</id>
+    <version>0.1</version>
+    <authors>David Fowler</authors>
+    <projectUrl>https://bitbucket.org/dfowler/vsixcommands</projectUrl>
+    <description>A powershell module that wraps some extension manager APIs.</description>
+  </metadata>
+</package>
