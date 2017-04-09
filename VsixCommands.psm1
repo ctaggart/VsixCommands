@@ -1,21 +1,74 @@
+# if (-not (Get-Module -ListAvailable -Name VSSetup)) {
+#     Install-Module VSSetup -Scope CurrentUser
+# }
+# $vs = Get-VSSetupInstance
+# $vsixInstallerPath = Join-Path $vs.InstallationPath 'Common7\IDE\VSIXInstaller.exe'
+
+# try {
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PrivateAssemblies\Microsoft.VisualStudio.Setup.Common.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PrivateAssemblies\Microsoft.VisualStudio.Setup.Engine.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\Microsoft.VisualStudio.ExtensionEngine.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PrivateAssemblies\Microsoft.VisualStudio.ExtensionManager.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\Microsoft.VisualStudio.Imaging.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\CommonExtensions\Microsoft\NuGet\Newtonsoft.Json.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PrivateAssemblies\Microsoft.VisualStudio.Threading.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PrivateAssemblies\Microsoft.VisualStudio.Validation.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\CommonExtensions\Microsoft\ExtensionManager\ServiceModule\StreamJsonRpc.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\Microsoft.VisualStudio.Utilities.dll')
+#     Add-Type -Path (Join-Path $vs.InstallationPath 'Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.Shell.15.0.dll')
+# } catch {
+#     $ex = $_.Exception
+#     echo $ex.Message
+#     echo $ex.LoaderExceptions
+# }
+
+Add-Type -Language CSharp @"
+public class Vsix {
+    public string Identifier;
+    public string Name;
+    public string Version;
+    public string PackageId;
+    public object Extension;
+}
+"@;
+
 $extensionManager = [Microsoft.VisualStudio.Shell.Package]::GetGlobalService([Microsoft.VisualStudio.ExtensionManager.SVsExtensionManager])
 $extensionRepository = [Microsoft.VisualStudio.Shell.Package]::GetGlobalService([Microsoft.VisualStudio.ExtensionManager.SVsExtensionRepository])
-$VSInstallDir = Get-ItemProperty HKLM:\SOFTWARE\Microsoft\VisualStudio\10.0 InstallDir | Select -ExpandProperty InstallDir
-$vsixInstallerPath = Join-Path $VSInstallDir VSIXInstaller.exe
+
+function Print-InstalledVsix {
+    foreach($xt in $extensionManager.GetInstalledExtensions()){
+        $v = New-Object Vsix
+        $v.Identifier = $xt.InstalledExtension.Header.Identifier
+        $v.Name = $xt.InstalledExtension.Header.Name
+        $v.Version = $xt.InstalledExtension.Header.Version
+        foreach($ae in $xt.InstalledExtension.Header.AdditionalElements){
+            if($ae.Name -eq "PackageId"){
+                $v.PackageId = $ae.InnerText
+            }
+        }
+        $v.Extension = $xt;
+        $v
+    }
+}
 
 function Get-InstalledVsix {
     param(
         [string]
-        [parameter(Mandatory = $true)]
+        [parameter(Mandatory = $false)]
         $VsixId
     )
     
-    $vsix = $null
-    if($extensionManager.TryGetInstalledExtension($VsixId, [ref]$vsix)) {
-        $vsix
+    if($VsixId){
+        $vsix = $null
+        if($extensionManager.TryGetInstalledExtension($VsixId, [ref]$vsix)) {
+            $vsix
+        }
+        else {
+            $null
+        }
     }
     else {
-        $null
+        $extensionManager.GetInstalledExtensions()
     }
 }
 
@@ -26,7 +79,8 @@ function Install-Vsix {
         $VsixPath
     )
         
-    Start-Process $vsixInstallerPath -ArgumentList $VsixPath -Wait
+    echo "would start process $vsixInstallerPath $VsixPath"
+    # Start-Process $vsixInstallerPath -ArgumentList $VsixPath -Wait
 }
 
 function Install-GalleryVsix {

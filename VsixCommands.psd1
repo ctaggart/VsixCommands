@@ -4,7 +4,7 @@
 ModuleToProcess = 'VsixCommands.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0'
+ModuleVersion = '0.1'
 
 # ID used to uniquely identify this module
 GUID = 'CE1D4B33-D4E1-433C-A779-644694606FD7'
